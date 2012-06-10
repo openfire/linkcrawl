@@ -1,0 +1,142 @@
+{% extends "core/base_web.html" %}
+
+{% block main %}
+
+<!-- styles -->
+<style>.hidden { display: none; }</style>
+
+
+<!-- top bar -->
+<h1>Welcome to the link crawler :)</h1>
+
+<form id='urlform' action='{{ link("enqueue") }}' method='post'>
+
+<b>Queue a URL manually: <input id='addurl' type='text' name='url' placeholder='enter a URL here' value='http://' />{%- if scraped -%}
+<select id='parent_select' name='parent_select'>
+	<option value="__NULL__">--Select a Nav Parent--</option>
+	{% for queued_item in queued %}
+	<option value="{{ queued_item.key.urlsafe() }}">{{ queued_item.url }}</option>
+	{% endfor %}
+{%- endif -%}</b><input id='add_submit' type='submit' value='Add' /><br />
+<b id='addloading' class='hidden'><img href='http://placehold.it/32x32' alt='loading_placeholder' /></b><br />
+
+<button id='startcrawl'{% if queued %}{% if len(queued) < 1 %} disabled='disabled'{% endif %}{% endif %}>Start Crawl Routine</button><br />
+<b id='crawlspinner' class='hidden'><img href='http://placehold.it/32x32' alt='loading_placeholder' /> Crawling...</b>
+
+</form>
+
+<hr />
+
+
+<!-- url's left to crawl -->
+<h2>Queued URLs</h2>
+
+{% if queued %}
+<ul id='queued_list'>
+	{% for queued_url in queued %}
+	<li id='queued_{{ queued_url.key.urlsafe() }}' class='added'><b>{{ queued_url.url }}</b> at key {{ queued_url.key.urlsafe() }} - {% if queued_url.started == false %}<b style='font-color: red;'>not started</b>{% else %}<b style='font-color: green;'>started</b>{% endif %}</li>
+	{% endfor %}
+</ul>
+{% else %}
+<ul id='queued_list'></ul>
+{% endif %}
+
+<br /><br /><br />
+<hr /><br /><br />
+
+
+<!-- pages successfully crawled -->
+<h2>Scraped URLs</h2>
+
+{% if scraped %}
+<ul id='scraped_list'>
+	{% for scraped_page in scraped %}
+	<li id='scraped_{{ queued_url.key.urlsafe() }}'>URL key: <b>{{ scraped_page.queued_url.urlsafe() }}</b> - {{ scraped_page.contenttext() }}</li>
+	{% endfor %}
+</ul>
+{% else %}
+<b>No finished URLs. Aww.</b>
+{% endif %}
+
+{% endblock main %}
+{% block postsouth %}
+
+<script>
+
+
+
+$(document).ready(function () {
+
+	function addURLEventHandler(event) {
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		$('#addurl').attr('disabled', 'disabled');
+		$('#addloading').css({opacity: 0}).removeClass('hidden').animate({opacity: 1}, {duration: 200, complete: function (event) {
+
+			if ($('#parent_select').val() != '__NULL__') {
+				request = $.apptools.api.crawler.add_url({url: $('#addurl').val(), parent: $('#parent_select').val()});
+			}
+			else
+			{
+				request = $.apptools.api.crawler.add_url({url: $('#addurl').val()});
+			}
+			request.fulfill({
+
+				failure: function (error) {
+					console.log('An error occurred.', error);
+					alert('An error occurred. Check the console.');
+					$('#addurl').delAttr('disabled');
+				},
+
+				success: function (response) {
+					console.log('A success response was receied.', response);
+					$('#queued_list').append('<li class="added"><b>'+$('#addurl').val()+'</b> at key '+response.queued_url.key+' - <b>not started</b></li>');
+					$('#addurl').removeAttr('disabled');
+					$('#addloading').animate({opacity: 0}, {duration: 200, complete: function (event) {
+
+						$('#addloading').addClass('hidden');
+
+					}});
+				}
+
+			});
+
+		}});
+
+	}
+
+	function startCrawler(event) {
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		$('#startcrawl').attr('disabled', 'disabled');
+		$('#crawlspinner').css({opacity: 0}).removeClass('hidden').animate({opacity: 1}, {duration: 200, complete: function (event) {
+
+			$.apptools.api.crawler.start().fulfill({
+
+				success: function (response) {
+
+					alert('Crawler started!');
+
+				},
+
+				failure: function (error) {
+
+					alert('Could not start crawler!');
+
+				}
+			})
+		}});
+	}
+
+	$('#urlform').submit(addURLEventHandler);
+	$('#add_submit').click(addURLEventHandler);
+	$('#startcrawl').click(startCrawler);
+
+});
+</script>
+
+{% endblock %}
