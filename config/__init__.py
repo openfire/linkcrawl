@@ -46,7 +46,7 @@ _config['webapp2'] = {
 
 _config['webapp2_extras.sessions'] = {
 
-    'secret_key': 'ASDLKJOVIBBVC*@()#HD)(VH$(*GC@(E*C(CBDCS))))',
+    'secret_key': '__NULL__',
     'default_backend': 'securecookie',
     'cookie_name':     'appsession',
     'session_max_age': None,
