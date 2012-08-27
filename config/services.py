@@ -25,7 +25,7 @@ config['apptools.project.services'] = {
 
         'hmac_hash': hashlib.sha512,  # Hash algorithm to use for HMAC signatures
         'url_prefix': '/_api/rpc',  # Prefix for all service invocation URLs
-        'secret_key': 'vjvbhvb(*B(#&@G#cvbn9dnc9*BN(!*B76cv23',  # Secret key for generating HMAC signings
+        'secret_key': '__NULL__',  # Secret key for generating HMAC signings
 
     },
 
